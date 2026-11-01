@@ -31,7 +31,7 @@ public class WaveSpawner : MonoBehaviour
     // which makes timed sequences like waves easy to write
     IEnumerator RunWaves()
     {
-        while (true)
+        while (!GameManager.Instance.IsGameOver)
         {
             CurrentWave++;
 
@@ -42,6 +42,7 @@ public class WaveSpawner : MonoBehaviour
             // 1. Spawn the enemies one by one
             for (int i = 0; i < count; i++)
             {
+                if (GameManager.Instance.IsGameOver) yield break;
                 SpawnEnemy(speed);
                 yield return new WaitForSeconds(timeBetweenSpawns);
             }
