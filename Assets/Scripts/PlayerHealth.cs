@@ -35,7 +35,7 @@ public class PlayerHealth : MonoBehaviour
         StartCoroutine(InvincibilityRoutine());
     }
 
-    // Blink for 1 second; no damage can be taken during this time
+    // Blink for a moment; no damage can be taken during this time
     IEnumerator InvincibilityRoutine()
     {
         isInvincible = true;

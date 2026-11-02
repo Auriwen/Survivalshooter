@@ -4,8 +4,7 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    // "Singleton": one shared GameManager that any script can reach
-    // with GameManager.Instance, without needing a slot in the Inspector
+    // One shared GameManager that any script can reach with GameManager.Instance
     public static GameManager Instance { get; private set; }
 
     public int Score { get; private set; }

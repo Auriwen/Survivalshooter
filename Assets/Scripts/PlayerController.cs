@@ -7,21 +7,27 @@ public class PlayerController : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
 
-    [Header("Shooting")]                              // NEW
-    [SerializeField] private GameObject bulletPrefab; // NEW
-    [SerializeField] private Transform firePoint;     // NEW
-    [SerializeField] private float fireRate = 8f;     // NEW: shots per second
+    [Header("Aiming")]                                   // NEW
+    [SerializeField] private Transform aimPivot;         // NEW: rotates toward the mouse
+    [SerializeField] private bool spriteFacesRight = true; // NEW: which way the art looks
+
+    [Header("Shooting")]
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private float fireRate = 8f;
 
     private Rigidbody2D rb;
     private Camera cam;
+    private SpriteRenderer spriteRenderer;               // NEW
     private Vector2 moveInput;
     private Vector2 mouseWorldPos;
-    private float nextFireTime = 0f;                  // NEW
+    private float nextFireTime = 0f;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         cam = Camera.main;
+        spriteRenderer = GetComponent<SpriteRenderer>(); // NEW
     }
 
     void Update()
@@ -38,14 +44,18 @@ public class PlayerController : MonoBehaviour
         }
         moveInput = input.normalized;
 
-        // 2. Mouse position: screen pixels -> world units
         Mouse mouse = Mouse.current;
         if (mouse != null)
         {
+            // 2. Mouse position: screen pixels -> world units
             Vector2 screenPos = mouse.position.ReadValue();
             mouseWorldPos = cam.ScreenToWorldPoint(screenPos);
 
-            // 3. NEW: hold left mouse button to shoot, limited by fire rate
+            // 3. NEW: aim the pivot and flip the sprite (before shooting,
+            //    so the bullet uses this frame's aim)
+            Aim();
+
+            // 4. Shoot while holding the left mouse button
             if (mouse.leftButton.isPressed && Time.time >= nextFireTime)
             {
                 Shoot();
@@ -56,16 +66,24 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Move
+        // CHANGED: only movement here; the body no longer rotates
         rb.linearVelocity = moveInput * moveSpeed;
-
-        // Rotate to face the mouse
-        Vector2 aimDir = mouseWorldPos - rb.position;
-        float angle = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg - 90f;
-        rb.MoveRotation(angle);
     }
 
-    // NEW: create a bullet at the fire point, facing the same way as the player
+    // NEW
+    void Aim()
+    {
+        Vector2 aimDir = mouseWorldPos - (Vector2)transform.position;
+
+        // Rotate only the pivot (same angle math as before)
+        float angle = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg - 90f;
+        aimPivot.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        // Flip the body to face the mouse's side
+        bool mouseIsLeft = aimDir.x < 0f;
+        spriteRenderer.flipX = spriteFacesRight ? mouseIsLeft : !mouseIsLeft;
+    }
+
     void Shoot()
     {
         Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
