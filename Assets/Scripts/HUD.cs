@@ -41,7 +41,7 @@ public class HUD : MonoBehaviour
         if (gm.Score != lastScore)
         {
             lastScore = gm.Score;
-            scoreText.text = $"{lastScore}";
+            scoreText.text = $"SCORE:{lastScore}";
         }
 
         // Health (the player object is destroyed on death, so it becomes null)
