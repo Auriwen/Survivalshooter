@@ -16,7 +16,8 @@ public class WaveSpawner : MonoBehaviour
     [SerializeField] private float timeBetweenSpawns = 0.5f;    // gap between enemies
     [SerializeField] private float timeBetweenWaves = 3f;       // break after a wave
     [SerializeField] private float spawnSpread = 0.4f;          // random offset so enemies don't stack
-
+     [SerializeField] private int baseScorePerKill = 10;      // points per kill in wave 1
+    [SerializeField] private int extraScorePerWave = 5;      // +5 points per kill each wave
     public int CurrentWave { get; private set; } = 0;
 
     private readonly List<Enemy> aliveEnemies = new List<Enemy>();
@@ -64,6 +65,7 @@ public class WaveSpawner : MonoBehaviour
         Vector2 position = GetSpawnPosition();
         Enemy enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
         enemy.SetMoveSpeed(speed);
+        enemy.SetScoreValue(baseScorePerKill + (CurrentWave - 1) * extraScorePerWave);
         aliveEnemies.Add(enemy);
     }
 
@@ -74,4 +76,5 @@ public class WaveSpawner : MonoBehaviour
         Vector2 offset = Random.insideUnitCircle * spawnSpread;
         return (Vector2)point.position + offset;
     }
+       
 }

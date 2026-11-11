@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
 
     public int Score { get; private set; }
     public bool IsGameOver { get; private set; }
+    public bool IsNewHighscore { get; private set; }   // NEW: true if this run beat the best score
 
     void Awake()
     {
@@ -32,12 +33,16 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;   // only run once
         IsGameOver = true;
-        Debug.Log($"GAME OVER! Final score: {Score}. Press R to restart.");
+
+        // NEW: save the score if it's the best so far
+        IsNewHighscore = HighscoreManager.SubmitScore(Score);
+
+        Debug.Log($"GAME OVER! Final score: {Score}, best: {HighscoreManager.Highscore}");
     }
 
     void Update()
     {
-        // Temporary restart key until we build the game-over screen
+        // Restart with R after dying
         if (IsGameOver && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);

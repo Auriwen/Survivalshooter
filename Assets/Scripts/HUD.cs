@@ -3,26 +3,35 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Shows score, flasks (health) and wave on screen, and the game-over message
+// Shows score, flasks (health) and wave on screen, and the game-over screen
 public class HUD : MonoBehaviour
 {
     [Header("Text fields")]
     [SerializeField] private TMP_Text scoreText;
     [SerializeField] private TMP_Text waveText;
-    [SerializeField] private GameObject gameOverText;
+    [SerializeField] private GameObject gameOverText;   // the GameOverGroup
+
+    [Header("Game over details")]                         // NEW
+    [SerializeField] private TMP_Text finalScoreText;     // NEW
+    [SerializeField] private TMP_Text bestText;           // NEW
+    [SerializeField] private GameObject newHighscoreText; // NEW
 
     [Header("Hearts")]
     [SerializeField] private Image[] heartImages;   // one image per HP, left to right
     [SerializeField] private Sprite fullHeart;
     [SerializeField] private Sprite emptyHeart;     // optional: leave empty to dim lost hearts instead
-    [SerializeField] private float popScale = 1.5f; // how big a lost heart grows before shrinking
+
+    [Header("Coin")]
+    [SerializeField] private RectTransform coinIcon; // pops when the score goes up
+
+    [Header("Pop effect")]
+    [SerializeField] private float popScale = 1.5f;
     [SerializeField] private float popDuration = 0.25f;
 
     [Header("Game references")]
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private WaveSpawner waveSpawner;
 
-    // Remember the last shown values, so the UI is only updated when something changes
     private int lastScore = -1;
     private int lastHealth = -1;
     private int lastWave = -1;
@@ -40,23 +49,25 @@ public class HUD : MonoBehaviour
         // Score
         if (gm.Score != lastScore)
         {
+            if (lastScore != -1 && gm.Score > lastScore && coinIcon != null)
+            {
+                StartCoroutine(Pop(coinIcon));
+            }
             lastScore = gm.Score;
-            scoreText.text = $"SCORE:{lastScore}";
+            scoreText.text = $"{lastScore:D5}"; // 5 digits, leading zeros
         }
 
-        // Health (the player object is destroyed on death, so it becomes null)
+        // Health
         int health = (playerHealth != null) ? playerHealth.CurrentHealth : 0;
         if (health != lastHealth)
         {
-            // Pop every heart that was just lost (not on the very first frame)
             if (lastHealth != -1 && health < lastHealth)
             {
                 for (int i = health; i < lastHealth && i < heartImages.Length; i++)
                 {
-                    StartCoroutine(PopHeart(heartImages[i].rectTransform));
+                    StartCoroutine(Pop(heartImages[i].rectTransform));
                 }
             }
-
             lastHealth = health;
             UpdateHearts(health);
         }
@@ -68,11 +79,20 @@ public class HUD : MonoBehaviour
             waveText.text = $"WAVE {lastWave}";
         }
 
-        // Game over message
+        // Game over screen (runs once, the moment the player dies)
         if (gm.IsGameOver && !gameOverText.activeSelf)
         {
-            gameOverText.SetActive(true);
+            ShowGameOver(gm);   // CHANGED: now also fills in the scores
         }
+    }
+
+    // NEW: fill in the numbers, then show the whole game over group
+    void ShowGameOver(GameManager gm)
+    {
+        finalScoreText.text = $"SCORE {gm.Score}";
+        bestText.text = $"BEST {HighscoreManager.Highscore}";
+        newHighscoreText.SetActive(gm.IsNewHighscore);   // only visible if you beat the record
+        gameOverText.SetActive(true);
     }
 
     void UpdateHearts(int health)
@@ -83,31 +103,29 @@ public class HUD : MonoBehaviour
 
             if (emptyHeart != null)
             {
-                // Swap between full and empty heart sprites
                 heartImages[i].sprite = isFull ? fullHeart : emptyHeart;
                 heartImages[i].color = Color.white;
             }
             else
             {
-                // No empty sprite: keep the full heart, but make lost ones faint
                 heartImages[i].sprite = fullHeart;
                 heartImages[i].color = isFull ? Color.white : new Color(1f, 1f, 1f, 0.25f);
             }
         }
     }
 
-    // Grows the heart, then shrinks it back to normal size over popDuration seconds
-    IEnumerator PopHeart(RectTransform heart)
+    // Grows the icon, then shrinks it back to normal size over popDuration seconds
+    IEnumerator Pop(RectTransform icon)
     {
         float elapsed = 0f;
         while (elapsed < popDuration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / popDuration;               // goes from 0 to 1
-            float scale = Mathf.Lerp(popScale, 1f, t);     // goes from 1.5 down to 1
-            heart.localScale = new Vector3(scale, scale, 1f);
-            yield return null;                             // wait one frame
+            float t = elapsed / popDuration;
+            float scale = Mathf.Lerp(popScale, 1f, t);
+            icon.localScale = new Vector3(scale, scale, 1f);
+            yield return null;
         }
-        heart.localScale = Vector3.one;
+        icon.localScale = Vector3.one;
     }
 }

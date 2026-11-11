@@ -85,4 +85,8 @@ public class Enemy : MonoBehaviour
             playerHealth.TakeDamage(contactDamage);
         }
     }
+    public void SetScoreValue(int value)
+    {
+        scoreValue = value;
+    }
 }
