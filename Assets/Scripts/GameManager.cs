@@ -37,6 +37,14 @@ public class GameManager : MonoBehaviour
         // NEW: save the score if it's the best so far
         IsNewHighscore = HighscoreManager.SubmitScore(Score);
 
+        // NEW: play the game over sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopMusic();
+            AudioManager.Instance.PlayGameOver();
+        }
+
+
         Debug.Log($"GAME OVER! Final score: {Score}, best: {HighscoreManager.Highscore}");
     }
 

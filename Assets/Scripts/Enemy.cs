@@ -8,7 +8,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private int contactDamage = 1;
     [SerializeField] private int scoreValue = 10;
     [SerializeField] private bool spriteFacesRight = true;   // NEW: which way the art looks
-
+    [SerializeField] private GameObject deathEffectPrefab;              // NEW: effect to play when killed
     private int currentHealth;
     private Rigidbody2D rb;
     private Transform player;
@@ -59,6 +59,11 @@ public class Enemy : MonoBehaviour
         {
             Die();
         }
+        else
+        {
+            // NEW: play the hit sound
+            if (AudioManager.Instance != null) AudioManager.Instance.PlayEnemyHit();
+        }
     }
 
     // Called by the WaveSpawner to make later waves faster
@@ -74,6 +79,13 @@ public class Enemy : MonoBehaviour
         {
             GameManager.Instance.AddScore(scoreValue);
         }
+
+        // NEW: play the death effect
+        if (deathEffectPrefab != null)
+        {
+            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+        }
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayEnemyDeath();
         Destroy(gameObject);
     }
 

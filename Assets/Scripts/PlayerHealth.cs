@@ -31,6 +31,7 @@ public class PlayerHealth : MonoBehaviour
             Die();
             return;
         }
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayPlayerHurt();
 
         StartCoroutine(InvincibilityRoutine());
     }

@@ -6,6 +6,7 @@ public class Bullet : MonoBehaviour
     [SerializeField] private float speed = 12f;
     [SerializeField] private float lifetime = 2f;
     [SerializeField] private int damage = 1;
+        [SerializeField] private GameObject wallHitEffectPrefab;   // NEW: little flame puff on walls
 
     void Start()
     {
@@ -28,9 +29,14 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // NEW: hit a wall: just disappear
+           // Hit a wall: show the flame, then disappear
         if (other.CompareTag("Wall"))
         {
+            // NEW: spawn the flame where the arrow hit
+            if (wallHitEffectPrefab != null)
+            {
+                Instantiate(wallHitEffectPrefab, transform.position, Quaternion.identity);
+            }
             Destroy(gameObject);
         }
     }

@@ -87,5 +87,7 @@ public class PlayerController : MonoBehaviour
     void Shoot()
     {
         Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+           // NEW: arrow sound
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayShoot();
     }
 }
