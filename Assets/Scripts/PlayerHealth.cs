@@ -5,6 +5,7 @@ public class PlayerHealth : MonoBehaviour
 {
     [SerializeField] private int maxHealth = 5;
     [SerializeField] private float invincibilityTime = 1f;
+    [SerializeField] private DamageVignette damageVignette;   // NEW: red screen edges when hit
 
     public int CurrentHealth { get; private set; }
     public int MaxHealth => maxHealth;
@@ -26,11 +27,15 @@ public class PlayerHealth : MonoBehaviour
         CurrentHealth -= amount;
         Debug.Log($"Player HP: {CurrentHealth}/{maxHealth}");
 
+        // NEW: flash the screen edges red (also on the killing hit)
+        if (damageVignette != null) damageVignette.Pulse();
+
         if (CurrentHealth <= 0)
         {
             Die();
             return;
         }
+
         if (AudioManager.Instance != null) AudioManager.Instance.PlayPlayerHurt();
 
         StartCoroutine(InvincibilityRoutine());

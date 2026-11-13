@@ -66,6 +66,14 @@ public class AudioManager : MonoBehaviour
         musicSource.Stop();
     }
 
+    public void PauseMusic()
+    {
+        musicSource.Pause();
+    }
+    public void ResumeMusic()
+    {
+        musicSource.UnPause();
+    }
     void PlaySfx(AudioClip clip, float volume, bool randomPitch)
     {
         if (clip == null) return;   // missing sound: just stay silent instead of crashing

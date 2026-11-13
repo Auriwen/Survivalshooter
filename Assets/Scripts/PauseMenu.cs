@@ -39,6 +39,9 @@ public class PauseMenu : MonoBehaviour
         IsPaused = true;
         Time.timeScale = 0f;          // freezes physics, movement, timers and coroutines
         pausePanel.SetActive(true);
+
+        // NEW: pause the music too
+        if (AudioManager.Instance != null) AudioManager.Instance.PauseMusic();
     }
 
     // Called by the Resume button
@@ -47,6 +50,9 @@ public class PauseMenu : MonoBehaviour
         IsPaused = false;
         Time.timeScale = 1f;          // back to normal speed
         pausePanel.SetActive(false);
+
+        // NEW: resume the music too
+        if (AudioManager.Instance != null) AudioManager.Instance.ResumeMusic();
     }
 
     // Called by the Main Menu button
@@ -55,6 +61,8 @@ public class PauseMenu : MonoBehaviour
         // Reset the time scale first, otherwise the next scene would start frozen
         IsPaused = false;
         Time.timeScale = 1f;
+        // NEW: stop the music too
+        if (AudioManager.Instance != null) AudioManager.Instance.StopMusic();
         SceneManager.LoadScene(mainMenuSceneName);
     }
 }

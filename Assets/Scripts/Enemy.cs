@@ -7,17 +7,20 @@ public class Enemy : MonoBehaviour
     [SerializeField] private int maxHealth = 3;
     [SerializeField] private int contactDamage = 1;
     [SerializeField] private int scoreValue = 10;
-    [SerializeField] private bool spriteFacesRight = true;   // NEW: which way the art looks
-    [SerializeField] private GameObject deathEffectPrefab;              // NEW: effect to play when killed
+    [SerializeField] private bool spriteFacesRight = true;      // which way the art looks
+    [SerializeField] private GameObject deathEffectPrefab;      // particle burst on death
+
     private int currentHealth;
     private Rigidbody2D rb;
     private Transform player;
-    private SpriteRenderer spriteRenderer;                   // NEW
+    private SpriteRenderer spriteRenderer;
+    private HitFlash hitFlash;                                  // NEW: white flash when hit
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();     // NEW
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        hitFlash = GetComponent<HitFlash>();                    // NEW
         currentHealth = maxHealth;
     }
 
@@ -41,9 +44,7 @@ public class Enemy : MonoBehaviour
         Vector2 direction = ((Vector2)player.position - rb.position).normalized;
         rb.linearVelocity = direction * moveSpeed;
 
-        // NEW: face the walking direction
-        // (only flip when clearly moving sideways, so it doesn't flicker
-        //  when the player is almost straight above or below)
+        // Face the walking direction (only when clearly moving sideways, to avoid flicker)
         if (Mathf.Abs(direction.x) > 0.1f)
         {
             bool movingLeft = direction.x < 0f;
@@ -54,6 +55,16 @@ public class Enemy : MonoBehaviour
     // Called by the bullet when it hits this enemy
     public void TakeDamage(int amount)
     {
+        // NEW: flash white
+        if (hitFlash != null)
+        {
+            hitFlash.Flash();
+        }
+        else
+        {
+            Debug.LogWarning("Enemy has no HitFlash component!");   // tells you if it's missing
+        }
+
         currentHealth -= amount;
         if (currentHealth <= 0)
         {
@@ -61,7 +72,6 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            // NEW: play the hit sound
             if (AudioManager.Instance != null) AudioManager.Instance.PlayEnemyHit();
         }
     }
@@ -72,6 +82,12 @@ public class Enemy : MonoBehaviour
         moveSpeed = speed;
     }
 
+    // Called by the WaveSpawner to give later waves more points
+    public void SetScoreValue(int value)
+    {
+        scoreValue = value;
+    }
+
     void Die()
     {
         // Give points before disappearing
@@ -80,12 +96,14 @@ public class Enemy : MonoBehaviour
             GameManager.Instance.AddScore(scoreValue);
         }
 
-        // NEW: play the death effect
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayEnemyDeath();
+
+        // Particle burst where the enemy was
         if (deathEffectPrefab != null)
         {
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
-        if (AudioManager.Instance != null) AudioManager.Instance.PlayEnemyDeath();
+
         Destroy(gameObject);
     }
 
@@ -96,9 +114,5 @@ public class Enemy : MonoBehaviour
         {
             playerHealth.TakeDamage(contactDamage);
         }
-    }
-    public void SetScoreValue(int value)
-    {
-        scoreValue = value;
     }
 }
