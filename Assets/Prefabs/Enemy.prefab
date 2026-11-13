@@ -86,7 +86,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1568729914967194725, guid: 5aba2eba150b74399812e04be503824c, type: 3}
+  m_Sprite: {fileID: 6199791883379630216, guid: 665ca989034b74034958bddd06c9689b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -183,11 +183,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   moveSpeed: 2
-  maxHealth: 3
-  contactDamage: 1
-  scoreValue: 1000
   spriteFacesRight: 1
+  maxHealth: 3
+  scoreValue: 1000
   deathEffectPrefab: {fileID: 5411793814436443834, guid: c37ab84377a2c4fbeb6cc5822a52f695, type: 3}
+  attackDamage: 1
+  attackRange: 1
+  hitRange: 1.4
+  attackWindUp: 0.3
+  attackRecovery: 0.23
+  attackCooldown: 0.6
 --- !u!95 &-6295393371293530331
 Animator:
   serializedVersion: 7

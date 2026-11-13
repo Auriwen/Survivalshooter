@@ -1,69 +1,123 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class Enemy : MonoBehaviour
 {
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private int maxHealth = 3;
-    [SerializeField] private int contactDamage = 1;
-    [SerializeField] private int scoreValue = 10;
     [SerializeField] private bool spriteFacesRight = true;      // which way the art looks
+
+    [Header("Health & score")]
+    [SerializeField] private int maxHealth = 3;
+    [SerializeField] private int scoreValue = 10;
     [SerializeField] private GameObject deathEffectPrefab;      // particle burst on death
+
+    [Header("Attack")]
+    [SerializeField] private int attackDamage = 1;
+    [SerializeField] private float attackRange = 1.0f;     // starts attacking when this close
+    [SerializeField] private float hitRange = 1.4f;        // player must still be this close when the strike lands
+    [SerializeField] private float attackWindUp = 0.45f;   // time from start of the animation to the strike
+    [SerializeField] private float attackRecovery = 0.35f; // time after the strike until the animation ends
+    [SerializeField] private float attackCooldown = 0.6f;  // pause before the next attack can start
 
     private int currentHealth;
     private Rigidbody2D rb;
-    private Transform player;
     private SpriteRenderer spriteRenderer;
-    private HitFlash hitFlash;                                  // NEW: white flash when hit
+    private Animator animator;
+    private HitFlash hitFlash;
+    private Transform player;
+    private PlayerHealth playerHealth;
+
+    private bool isAttacking;
+    private float nextAttackTime;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        hitFlash = GetComponent<HitFlash>();                    // NEW
+        animator = GetComponent<Animator>();
+        hitFlash = GetComponent<HitFlash>();
         currentHealth = maxHealth;
     }
 
     void Start()
     {
-        // Find the object tagged "Player" once at the start
+        // Find the player once, and remember its health script for the attack
         GameObject p = GameObject.FindGameObjectWithTag("Player");
-        if (p != null) player = p.transform;
+        if (p != null)
+        {
+            player = p.transform;
+            playerHealth = p.GetComponent<PlayerHealth>();
+        }
     }
 
     void FixedUpdate()
     {
-        // If there's no player (e.g. it died), stand still
-        if (player == null)
+        // No player (dead) or busy attacking: stand still
+        if (player == null || isAttacking)
         {
             rb.linearVelocity = Vector2.zero;
             return;
         }
 
-        // Move toward the player
-        Vector2 direction = ((Vector2)player.position - rb.position).normalized;
-        rb.linearVelocity = direction * moveSpeed;
+        Vector2 toPlayer = (Vector2)player.position - rb.position;
+        float distance = toPlayer.magnitude;
 
-        // Face the walking direction (only when clearly moving sideways, to avoid flicker)
-        if (Mathf.Abs(direction.x) > 0.1f)
+        FaceDirection(toPlayer.x);
+
+        // Close enough and cooldown over: attack
+        if (distance <= attackRange && Time.time >= nextAttackTime)
         {
-            bool movingLeft = direction.x < 0f;
-            spriteRenderer.flipX = spriteFacesRight ? movingLeft : !movingLeft;
+            StartCoroutine(AttackRoutine());
+            return;
+        }
+
+        // Otherwise keep chasing
+        rb.linearVelocity = toPlayer.normalized * moveSpeed;
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        isAttacking = true;
+        rb.linearVelocity = Vector2.zero;
+
+        // 1. Start the attack animation
+        if (animator != null) animator.SetTrigger("Attack");
+
+        // 2. Wait until the strike frame appears
+        yield return new WaitForSeconds(attackWindUp);
+
+        // 3. Only hit if the player didn't step away in the meantime
+        if (player != null && playerHealth != null)
+        {
+            float distance = Vector2.Distance(rb.position, player.position);
+            if (distance <= hitRange)
+            {
+                playerHealth.TakeDamage(attackDamage);
+            }
+        }
+
+        // 4. Let the animation finish, then allow chasing again
+        yield return new WaitForSeconds(attackRecovery);
+        nextAttackTime = Time.time + attackCooldown;
+        isAttacking = false;
+    }
+
+    private void FaceDirection(float xDirection)
+    {
+        // Only flip when clearly moving sideways, so it doesn't flicker
+        if (Mathf.Abs(xDirection) > 0.1f)
+        {
+            bool facingLeft = xDirection < 0f;
+            spriteRenderer.flipX = spriteFacesRight ? facingLeft : !facingLeft;
         }
     }
 
     // Called by the bullet when it hits this enemy
     public void TakeDamage(int amount)
     {
-        // NEW: flash white
-        if (hitFlash != null)
-        {
-            hitFlash.Flash();
-        }
-        else
-        {
-            Debug.LogWarning("Enemy has no HitFlash component!");   // tells you if it's missing
-        }
+        if (hitFlash != null) hitFlash.Flash();
 
         currentHealth -= amount;
         if (currentHealth <= 0)
@@ -88,9 +142,8 @@ public class Enemy : MonoBehaviour
         scoreValue = value;
     }
 
-    void Die()
+    private void Die()
     {
-        // Give points before disappearing
         if (GameManager.Instance != null)
         {
             GameManager.Instance.AddScore(scoreValue);
@@ -98,21 +151,11 @@ public class Enemy : MonoBehaviour
 
         if (AudioManager.Instance != null) AudioManager.Instance.PlayEnemyDeath();
 
-        // Particle burst where the enemy was
         if (deathEffectPrefab != null)
         {
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
 
-        Destroy(gameObject);
-    }
-
-    // Runs every physics step while touching something
-    void OnCollisionStay2D(Collision2D collision)
-    {
-        if (collision.gameObject.TryGetComponent(out PlayerHealth playerHealth))
-        {
-            playerHealth.TakeDamage(contactDamage);
-        }
+        Destroy(gameObject);   // also stops a running attack
     }
 }
