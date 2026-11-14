@@ -7,7 +7,6 @@ public class MainMenu : MonoBehaviour
 {
     [SerializeField] private string gameSceneName = "Game";
     [SerializeField] private TMP_Text highscoreText;
-    [SerializeField] private GameObject exitButton;
 
     void Start()
     {
@@ -16,11 +15,6 @@ public class MainMenu : MonoBehaviour
         {
             highscoreText.text = $"BEST {HighscoreManager.Highscore}";
         }
-
-        // A web page can't close itself, so hide EXIT in the browser version
-#if UNITY_WEBGL && !UNITY_EDITOR
-        if (exitButton != null) exitButton.SetActive(false);
-#endif
     }
 
     // Called by the Play button

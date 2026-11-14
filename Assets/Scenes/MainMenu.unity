@@ -1286,6 +1286,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
   gameSceneName: Game
   highscoreText: {fileID: 1776294055}
+  exitButton: {fileID: 220679015}
 --- !u!4 &1901533417
 Transform:
   m_ObjectHideFlags: 0
