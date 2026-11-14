@@ -16,8 +16,10 @@ public class WaveSpawner : MonoBehaviour
     [SerializeField] private float timeBetweenSpawns = 0.5f;    // gap between enemies
     [SerializeField] private float timeBetweenWaves = 3f;       // break after a wave
     [SerializeField] private float spawnSpread = 0.4f;          // random offset so enemies don't stack
-     [SerializeField] private int baseScorePerKill = 10;      // points per kill in wave 1
-    [SerializeField] private int extraScorePerWave = 5;      // +5 points per kill each wave
+    [SerializeField] private int baseScorePerKill = 10;         // points per kill in wave 1
+    [SerializeField] private int extraScorePerWave = 5;         // +5 points per kill each wave
+    [SerializeField] private float entryDistance = 2f;          // how far into the room enemies walk before chasing
+
     public int CurrentWave { get; private set; } = 0;
 
     private readonly List<Enemy> aliveEnemies = new List<Enemy>();
@@ -62,19 +64,20 @@ public class WaveSpawner : MonoBehaviour
 
     void SpawnEnemy(float speed)
     {
-        Vector2 position = GetSpawnPosition();
+        // CHANGED: pick the gate first, then add the random offset
+        Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        Vector2 gatePosition = point.position;
+        Vector2 position = gatePosition + Random.insideUnitCircle * spawnSpread;
+
         Enemy enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
+
+        // CHANGED: the direction comes from the gate itself (no offset),
+        // so every enemy walks straight through the corridor
+        Vector2 towardCenter = (Vector2.zero - gatePosition).normalized;
+        enemy.SetEntryPoint(position + towardCenter * entryDistance);
+
         enemy.SetMoveSpeed(speed);
         enemy.SetScoreValue(baseScorePerKill + (CurrentWave - 1) * extraScorePerWave);
         aliveEnemies.Add(enemy);
     }
-
-    // Pick a random gate, plus a small random offset
-    Vector2 GetSpawnPosition()
-    {
-        Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
-        Vector2 offset = Random.insideUnitCircle * spawnSpread;
-        return (Vector2)point.position + offset;
-    }
-       
 }

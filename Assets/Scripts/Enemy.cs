@@ -32,6 +32,10 @@ public class Enemy : MonoBehaviour
     private bool isAttacking;
     private float nextAttackTime;
 
+    // NEW: walk to this point inside the room first, then start chasing
+    private Vector2 entryPoint;
+    private bool isEntering;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -52,6 +56,13 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    // NEW: called by the WaveSpawner right after spawning
+    public void SetEntryPoint(Vector2 point)
+    {
+        entryPoint = point;
+        isEntering = true;
+    }
+
     void FixedUpdate()
     {
         // No player (dead) or busy attacking: stand still
@@ -59,6 +70,22 @@ public class Enemy : MonoBehaviour
         {
             rb.linearVelocity = Vector2.zero;
             return;
+        }
+
+        // NEW: still in the corridor? Walk straight to the entry point first
+        if (isEntering)
+        {
+            Vector2 toEntry = entryPoint - rb.position;
+            if (toEntry.magnitude < 0.1f)
+            {
+                isEntering = false;   // arrived inside the room: start chasing
+            }
+            else
+            {
+                FaceDirection(toEntry.x);
+                rb.linearVelocity = toEntry.normalized * moveSpeed;
+                return;
+            }
         }
 
         Vector2 toPlayer = (Vector2)player.position - rb.position;

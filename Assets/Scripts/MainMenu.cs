@@ -6,15 +6,21 @@ using UnityEngine.SceneManagement;
 public class MainMenu : MonoBehaviour
 {
     [SerializeField] private string gameSceneName = "Game";
-    [SerializeField] private TMP_Text highscoreText;   // NEW
+    [SerializeField] private TMP_Text highscoreText;
+    [SerializeField] private GameObject exitButton;
 
-    // NEW: show the saved best score when the menu opens
     void Start()
     {
+        // Show the saved best score when the menu opens
         if (highscoreText != null)
         {
-            highscoreText.text = $"Highest score: {HighscoreManager.Highscore}";
+            highscoreText.text = $"BEST {HighscoreManager.Highscore}";
         }
+
+        // A web page can't close itself, so hide EXIT in the browser version
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (exitButton != null) exitButton.SetActive(false);
+#endif
     }
 
     // Called by the Play button
@@ -26,11 +32,9 @@ public class MainMenu : MonoBehaviour
     // Called by the Exit button
     public void ExitGame()
     {
-        Debug.Log("Exit pressed");
-        Application.Quit();   // closes the built game
+        Application.Quit();
 
 #if UNITY_EDITOR
-        // Application.Quit does nothing inside the editor, so stop Play mode instead
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
